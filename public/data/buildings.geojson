@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "id": "central-library", "name": "Atlanta Central Library", "type": "Public Library", "address": "1 Margaret Mitchell Square", "sqft": 208000, "capacity": 680, "year": 1980, "baseReadiness": 78, "zone": "Downtown Core" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.38996,33.75255],[-84.38872,33.75258],[-84.38872,33.75162],[-84.38996,33.75160],[-84.38996,33.75255]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "city-hall", "name": "Atlanta City Hall", "type": "Civic Building", "address": "55 Trinity Avenue SW", "sqft": 185000, "capacity": 520, "year": 1930, "baseReadiness": 74, "zone": "South Downtown" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.39055,33.74838],[-84.38938,33.74840],[-84.38940,33.74745],[-84.39052,33.74743],[-84.39055,33.74838]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "municipal-market", "name": "Municipal Market", "type": "Community Market", "address": "209 Edgewood Avenue SE", "sqft": 94000, "capacity": 430, "year": 1924, "baseReadiness": 69, "zone": "Sweet Auburn" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.37295,33.75478],[-84.37170,33.75480],[-84.37172,33.75392],[-84.37293,33.75390],[-84.37295,33.75478]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "rec-center", "name": "Martin Luther King Jr. Rec Center", "type": "Recreation Center", "address": "90 Boulevard NE", "sqft": 121000, "capacity": 610, "year": 2018, "baseReadiness": 86, "zone": "Old Fourth Ward" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.37228,33.75688],[-84.37086,33.75690],[-84.37088,33.75585],[-84.37226,33.75583],[-84.37228,33.75688]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "mercedes-benz", "name": "Vine City Cooling Hub", "type": "Event Support Center", "address": "141 Northside Drive NW", "sqft": 152000, "capacity": 950, "year": 2017, "baseReadiness": 82, "zone": "Stadium District" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.40310,33.75785],[-84.40145,33.75788],[-84.40146,33.75665],[-84.40308,33.75663],[-84.40310,33.75785]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "capitol", "name": "Capitol Education Center", "type": "Public Assembly", "address": "180 Central Avenue SW", "sqft": 76000, "capacity": 350, "year": 2008, "baseReadiness": 72, "zone": "Capitol Gateway" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-84.38642,33.74903],[-84.38548,33.74905],[-84.38550,33.74826],[-84.38640,33.74824],[-84.38642,33.74903]]] }
+    }
+  ]
+}
