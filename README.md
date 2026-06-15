@@ -9,4 +9,4 @@ npm install
 npm run dev
 ```
 
-Select a building on the map, toggle Major Event Mode if desired, and run the weather simulation. The app requests the National Weather Service hourly forecast and automatically uses a local Atlanta fallback forecast when the API is unavailable.
+Select one of the highlighted Atlanta buildings on the map and run the weather simulation. The app requests the National Weather Service hourly forecast and automatically uses a local Atlanta fallback forecast when the API is unavailable.
