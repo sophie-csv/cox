@@ -1,16 +1,16 @@
-export function runSimulation(building, periods, majorEvent) {
+export function runSimulation(building, periods) {
   const areaFactor = building.sqft / 10000
-  const occupancyFactor = majorEvent ? 1.28 : 1
+  const coolingCapacityFactor = Math.max(0.75, Math.min(1.35, building.coolingTons / (building.sqft / 500)))
 
   const baseline = periods.map(({ temperature }, index) => {
     const heatLoad = Math.max(0, temperature - 69)
     const daytimeLoad = index >= 3 && index <= 9 ? 1 : 0.58
-    return Number((areaFactor * (2.6 + heatLoad * 0.33) * daytimeLoad * occupancyFactor).toFixed(1))
+    return Number((areaFactor * (2.6 + heatLoad * 0.33) * daytimeLoad * coolingCapacityFactor).toFixed(1))
   })
 
   const optimized = baseline.map((value, index) => {
-    if (index < 3) return Number((value * (majorEvent ? 1.24 : 1.18)).toFixed(1))
-    if (index <= 8) return Number((value * (majorEvent ? 0.69 : 0.73)).toFixed(1))
+    if (index < 3) return Number((value * 1.18).toFixed(1))
+    if (index <= 8) return Number((value * 0.73).toFixed(1))
     return Number((value * 0.88).toFixed(1))
   })
 
@@ -20,7 +20,7 @@ export function runSimulation(building, periods, majorEvent) {
   const peakReduction = Math.max(...baseline) - Math.max(...optimized)
   const readiness = Math.min(
     99,
-    Math.round(building.baseReadiness + (majorEvent ? 4 : 8) + peakReduction * 0.28),
+    Math.round(building.baseReadiness + 8 + peakReduction * 0.28),
   )
 
   return {
@@ -29,7 +29,7 @@ export function runSimulation(building, periods, majorEvent) {
     baselineTotal,
     optimizedTotal,
     saved,
-    costSaved: saved * 0.137,
+    costSaved: saved * building.electricityPriceKwh,
     co2Avoided: saved * 0.82,
     peakReduction,
     readiness,
