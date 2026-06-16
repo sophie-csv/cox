@@ -406,7 +406,7 @@ function CoolCorridorsDashboard() {
   const [selectedCategory, setSelectedCategory] = useState('all')
 
   useEffect(() => {
-    fetch('/data/cool_corridors_buildings.json')
+    fetch(`${import.meta.env.BASE_URL}data/cool_corridors_buildings.json`)
       .then((response) => response.json())
       .then((payload) => {
         const normalized = (payload.buildings || []).map(normalizeBuilding)
