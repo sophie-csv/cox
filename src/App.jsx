@@ -1,272 +1,492 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import L from 'leaflet'
-import { MapContainer, Marker, TileLayer, Tooltip as LeafletTooltip, ZoomControl } from 'react-leaflet'
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Tooltip,
-} from 'chart.js'
-import { Line } from 'react-chartjs-2'
-import { getHourlyForecast } from './weather.js'
-import { runSimulation } from './simulation.js'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+import { MapContainer, Marker, Popup, TileLayer, Tooltip, ZoomControl } from 'react-leaflet'
 
 const ATLANTA_CENTER = [33.755, -84.39]
+const SAVINGS_KWH_PER_SQFT_DAY = 0.015
+const GRID_EMISSIONS_LBS_PER_KWH = 0.855
+const ELECTRICITY_RATE = 0.12
 
-const priorityColors = {
-  0: '#f7d26a',
-  1: '#d7ff92',
-  2: '#75cda0',
-  3: '#67aebd',
+const TIME_SCALES = {
+  day: { label: 'Day', multiplier: 1 },
+  week: { label: 'Week', multiplier: 7 },
+  month: { label: 'Month', multiplier: 30 },
+  year: { label: 'Year', multiplier: 365 },
 }
 
-function Icon({ name }) {
-  const paths = {
-    bolt: <path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z" />,
-    leaf: <><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 18 2 18 2c1 6.5-1 14-7 15"/><path d="M2 21c0-3 1.85-5.36 5.08-6.94C9.66 12.8 12 12 16 12"/></>,
-    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
-    chart: <><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></>,
-    building: <><path d="M3 21h18M6 21V4h12v17M9 8h2M13 8h2M9 12h2M13 12h2M9 16h2M13 16h2"/></>,
-    pin: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
-    cloud: <><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></>,
-    check: <path d="m5 12 4 4L19 6" />,
-    arrow: <><path d="M5 12h14M13 6l6 6-6 6"/></>,
+const SORT_OPTIONS = {
+  sqft: 'Largest square footage',
+  yearlyKwh: 'Highest yearly kWh savings',
+  yearlyCo2: 'Highest yearly CO₂ savings',
+  yearlyCost: 'Highest yearly cost savings',
+}
+
+const MAP_FILTERS = {
+  all: 'Show all buildings',
+  withSqft: 'Show only buildings with square footage',
+  top10: 'Show top 10 by estimated yearly savings',
+}
+
+function normalizeBuilding(raw, index) {
+  const parsedSqft = Number(raw.sqft)
+  const sqft = Number.isFinite(parsedSqft) && parsedSqft > 0 ? parsedSqft : null
+  const parsedLat = raw.lat === null || raw.lat === undefined || raw.lat === '' ? NaN : Number(raw.lat)
+  const parsedLng = raw.lng === null || raw.lng === undefined || raw.lng === '' ? NaN : Number(raw.lng)
+  const lat = Number.isFinite(parsedLat) ? parsedLat : null
+  const lng = Number.isFinite(parsedLng) ? parsedLng : null
+
+  return {
+    id: raw.id || `building-${index + 1}`,
+    name: raw.name || `Building ${index + 1}`,
+    address: raw.address || 'Address not available',
+    sqft,
+    sqftDisplay: sqft ? `${sqft.toLocaleString()} ft²` : 'No sqft provided',
+    sqftStatus: sqft ? (raw.sqftStatus || 'Provided') : 'No sqft provided',
+    lat,
+    lng,
+    categoryKey: raw.categoryKey || 'all',
+    categoryLabel: raw.categoryLabel || 'Uncategorized',
+    ownershipCategory: raw.ownershipCategory || raw.categoryLabel || 'Not provided',
+    propertyType: raw.propertyType || 'Not provided',
+    coordinateStatus: raw.coordinateStatus || 'Coordinate status not provided',
+    geocoderMatchAddress: raw.geocoderMatchAddress || '',
+    geocoderScore: raw.geocoderScore ?? null,
+    certificationStatus: raw.certificationStatus || 'Not found in LEED or ENERGY STAR certified lists',
+    notes: raw.notes || 'No additional notes',
   }
-  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>
 }
 
-function InfoTip({ label, children, sourceName, sourceUrl }) {
+function calculateBuildingSavings(building, timeScale = 'day') {
+  if (!building.sqft) {
+    return {
+      kwh: null,
+      co2: null,
+      cost: null,
+      dailyKwh: null,
+      weeklyKwh: null,
+      monthlyKwh: null,
+      yearlyKwh: null,
+      yearlyCo2: null,
+      yearlyCost: null,
+    }
+  }
+
+  const dailyKwh = building.sqft * SAVINGS_KWH_PER_SQFT_DAY
+  const weeklyKwh = dailyKwh * 7
+  const monthlyKwh = dailyKwh * 30
+  const yearlyKwh = dailyKwh * 365
+  const kwh = dailyKwh * TIME_SCALES[timeScale].multiplier
+
+  return {
+    kwh,
+    co2: kwh * GRID_EMISSIONS_LBS_PER_KWH,
+    cost: kwh * ELECTRICITY_RATE,
+    dailyKwh,
+    weeklyKwh,
+    monthlyKwh,
+    yearlyKwh,
+    yearlyCo2: yearlyKwh * GRID_EMISSIONS_LBS_PER_KWH,
+    yearlyCost: yearlyKWhCost(yearlyKwh),
+  }
+}
+
+function yearlyKWhCost(yearlyKwh) {
+  return yearlyKwh * ELECTRICITY_RATE
+}
+
+function calculatePortfolioTotals(buildings, timeScale = 'day') {
+  return buildings.reduce((totals, building) => {
+    const savings = calculateBuildingSavings(building, timeScale)
+    const yearly = calculateBuildingSavings(building, 'year')
+
+    return {
+      buildings: totals.buildings + 1,
+      withSqft: totals.withSqft + (building.sqft ? 1 : 0),
+      missingSqft: totals.missingSqft + (building.sqft ? 0 : 1),
+      totalSqft: totals.totalSqft + (building.sqft || 0),
+      kwh: totals.kwh + (savings.kwh || 0),
+      co2: totals.co2 + (savings.co2 || 0),
+      cost: totals.cost + (savings.cost || 0),
+      yearlyKwh: totals.yearlyKwh + (yearly.kwh || 0),
+      yearlyCo2: totals.yearlyCo2 + (yearly.co2 || 0),
+      yearlyCost: totals.yearlyCost + (yearly.cost || 0),
+    }
+  }, {
+    buildings: 0,
+    withSqft: 0,
+    missingSqft: 0,
+    totalSqft: 0,
+    kwh: 0,
+    co2: 0,
+    cost: 0,
+    yearlyKwh: 0,
+    yearlyCo2: 0,
+    yearlyCost: 0,
+  })
+}
+
+function formatKWh(value) {
+  if (value === null || value === undefined) return 'No sqft provided'
+  if (Math.abs(value) >= 1000000000) return `${(value / 1000000000).toFixed(2)}B kWh`
+  if (Math.abs(value) >= 1000000) return `${(value / 1000000).toFixed(2)}M kWh`
+  if (Math.abs(value) >= 1000) return `${Math.round(value).toLocaleString()} kWh`
+  return `${value.toFixed(1)} kWh`
+}
+
+function formatCO2(value) {
+  if (value === null || value === undefined) return 'No sqft provided'
+  if (Math.abs(value) >= 1000000000) return `${(value / 1000000000).toFixed(2)}B lbs CO₂`
+  if (Math.abs(value) >= 1000000) return `${(value / 1000000).toFixed(2)}M lbs CO₂`
+  return `${Math.round(value).toLocaleString()} lbs CO₂`
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined) return 'No sqft provided'
+  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+}
+
+function formatNumber(value) {
+  return Math.round(value || 0).toLocaleString()
+}
+
+function KpiCard({ label, value, detail, tone = 'green' }) {
   return (
-    <details className="info-tip">
-      <summary aria-label={`How ${label} is calculated`}>?</summary>
-      <div className="info-popover">
-        <strong>{label}</strong>
-        <p>{children}</p>
-        {sourceName && <small>Source: {sourceUrl ? <a href={sourceUrl} target="_blank" rel="noreferrer">{sourceName}</a> : sourceName}</small>}
-      </div>
-    </details>
-  )
-}
-
-function CategoryLabel({ children, help, sourceName, sourceUrl }) {
-  return <span className="category-label">{children}<InfoTip label={children} sourceName={sourceName} sourceUrl={sourceUrl}>{help}</InfoTip></span>
-}
-
-function MetricCard({ icon, value, label, detail, accent, help }) {
-  return (
-    <article className={`metric-card ${accent}`}>
-      <span className="metric-icon"><Icon name={icon} /></span>
-      <div><strong>{value}</strong><span className="metric-label">{label}<InfoTip label={label}>{help}</InfoTip></span><small>{detail}</small></div>
+    <article className={`kpi-card ${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {detail && <small>{detail}</small>}
     </article>
   )
 }
 
-export default function App() {
-  const [buildings, setBuildings] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const [running, setRunning] = useState(false)
-  const [forecast, setForecast] = useState(null)
-  const [result, setResult] = useState(null)
+function CategorySelector({ categories, selectedCategory, onChange }) {
+  return (
+    <section className="category-panel">
+      <div>
+        <span className="eyebrow">Dataset-provided subgroup</span>
+        <h2>Choose a building category</h2>
+        <p>Calculations, map markers, and table rows update based on the selected workbook category. Buildings are featured directly on the map when coordinates are available.</p>
+      </div>
+      <div className="category-actions">
+        <div className="category-tabs" aria-label="Building category toggles">
+          {categories.map((category) => (
+            <button
+              key={category.key}
+              className={selectedCategory === category.key ? 'active' : ''}
+              onClick={() => onChange(category.key)}
+            >
+              <strong>{category.label}</strong>
+              <span>{formatNumber(category.records)} buildings</span>
+              <small>{formatNumber(category.withCoords || 0)} mapped</small>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function AssumptionsPanel() {
+  return (
+    <aside className="assumptions-panel">
+      <h3>Assumptions</h3>
+      <ul>
+        <li>Estimated HVAC scheduling savings: <b>0.015 kWh per square foot per day</b></li>
+        <li>Grid emissions factor: <b>0.855 lbs CO₂ per kWh</b></li>
+        <li>Electricity rate: <b>$0.12 per kWh</b></li>
+        <li>Values are simulated estimates for hackathon demonstration</li>
+      </ul>
+    </aside>
+  )
+}
+
+function SavingsTab({ buildings, category }) {
+  const [timeScale, setTimeScale] = useState('year')
+  const totals = useMemo(() => calculatePortfolioTotals(buildings, timeScale), [buildings, timeScale])
+  const dailyTotals = useMemo(() => calculatePortfolioTotals(buildings, 'day'), [buildings])
+  const yearlyTotals = useMemo(() => calculatePortfolioTotals(buildings, 'year'), [buildings])
+
+  return (
+    <section className="tab-panel savings-layout no-chart">
+      <div className="scale-card">
+        <span className="eyebrow">{category?.label || 'Selected category'}</span>
+        <h2>Savings by Category</h2>
+        <p>These simulated savings are calculated only for buildings in the selected dataset category.</p>
+        <div className="scale-selector" role="tablist" aria-label="Savings time scale">
+          {Object.entries(TIME_SCALES).map(([key, scale]) => (
+            <button key={key} className={timeScale === key ? 'active' : ''} onClick={() => setTimeScale(key)}>
+              {scale.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="kpi-grid category-kpis">
+        <KpiCard label="Total square footage" value={`${formatNumber(totals.totalSqft)} ft²`} detail={category?.description} />
+        <KpiCard label={`Estimated kWh saved per ${TIME_SCALES[timeScale].label.toLowerCase()}`} value={formatKWh(totals.kwh)} />
+        <KpiCard label="Estimated CO₂ avoided" value={formatCO2(totals.co2)} tone="blue" />
+        <KpiCard label="Estimated cost saved" value={formatCurrency(totals.cost)} tone="gold" />
+        <KpiCard label="Estimated yearly kWh saved" value={formatKWh(yearlyTotals.kwh)} tone="blue" />
+        <KpiCard label="Estimated daily kWh saved" value={formatKWh(dailyTotals.kwh)} />
+      </div>
+
+      <AssumptionsPanel />
+      <div className="wide-note">
+        <b>Simulated savings for demo purposes.</b> Actual savings depend on HVAC system type, controls compatibility, building envelope, occupancy, utility tariffs, and weather.
+      </div>
+    </section>
+  )
+}
+
+function filterMapBuildings(buildings, filter) {
+  let filtered = buildings
+  if (filter === 'withSqft') filtered = buildings.filter((building) => building.sqft)
+  if (filter === 'top10') {
+    filtered = [...buildings]
+      .filter((building) => building.sqft)
+      .sort((a, b) => calculateBuildingSavings(b, 'year').kwh - calculateBuildingSavings(a, 'year').kwh)
+      .slice(0, 10)
+  }
+  return filtered
+}
+
+function MapTab({ buildings, category }) {
+  const [mapFilter, setMapFilter] = useState('all')
+  const filtered = useMemo(() => filterMapBuildings(buildings, mapFilter), [buildings, mapFilter])
+  const withCoords = filtered.filter((building) => building.lat !== null && building.lng !== null)
+  const missingCoords = filtered.length - withCoords.length
+
+  return (
+    <section className="tab-panel map-layout">
+      <div className="map-controls">
+        <div>
+          <h2>Clickable Map</h2>
+          <p>Showing {category?.label || 'selected'} buildings only. Buildings without coordinates stay in the table and calculations.</p>
+        </div>
+        <select value={mapFilter} onChange={(event) => setMapFilter(event.target.value)} aria-label="Map filter">
+          {Object.entries(MAP_FILTERS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </select>
+      </div>
+      <div className="map-shell">
+        <MapContainer center={ATLANTA_CENTER} zoom={11} zoomControl={false} scrollWheelZoom>
+          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <ZoomControl position="bottomright" />
+          {withCoords.map((building) => {
+            const savings = calculateBuildingSavings(building, 'year')
+            const daily = calculateBuildingSavings(building, 'day')
+            return (
+              <Marker key={building.id} position={[building.lat, building.lng]}>
+                <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+                  <div className="map-tooltip">
+                    <b>{building.name}</b>
+                    <span>{building.address}</span>
+                    <small>{building.categoryLabel} | {formatKWh(savings.yearlyKwh)} estimated yearly savings</small>
+                  </div>
+                </Tooltip>
+                <Popup>
+                  <div className="map-popup">
+                    <b>{building.name}</b>
+                    <span>{building.address}</span>
+                    <span>{building.categoryLabel}</span>
+                    <span>{building.sqftDisplay}</span>
+                    <span>Daily: {formatKWh(daily.kwh)}</span>
+                    <span>Yearly: {formatKWh(savings.kwh)}</span>
+                    <span>CO₂: {formatCO2(savings.co2)}</span>
+                    <span>Cost: {formatCurrency(savings.cost)}</span>
+                    <span>{building.coordinateStatus}</span>
+                    <span>{building.certificationStatus}</span>
+                    <small>{building.notes}</small>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          })}
+        </MapContainer>
+        {!withCoords.length && (
+          <div className="map-empty">
+            <h3>No mappable coordinates in this dataset yet</h3>
+            <p>The attached workbook includes latitude/longitude columns, but none of the selected records have coordinate values populated yet. Once coordinates are populated, buildings will appear here as hoverable/clickable map markers.</p>
+          </div>
+        )}
+      </div>
+      <div className="map-footnote">
+        <span>{withCoords.length.toLocaleString()} buildings mapped</span>
+        <span>{missingCoords.toLocaleString()} buildings missing coordinates</span>
+      </div>
+    </section>
+  )
+}
+
+function sortBuildings(buildings, sortKey) {
+  return [...buildings].sort((a, b) => {
+    const aYear = calculateBuildingSavings(a, 'year')
+    const bYear = calculateBuildingSavings(b, 'year')
+    if (sortKey === 'sqft') return (b.sqft || 0) - (a.sqft || 0)
+    if (sortKey === 'yearlyKwh') return (bYear.kwh || 0) - (aYear.kwh || 0)
+    if (sortKey === 'yearlyCo2') return (bYear.co2 || 0) - (aYear.co2 || 0)
+    if (sortKey === 'yearlyCost') return (bYear.cost || 0) - (aYear.cost || 0)
+    return 0
+  })
+}
+
+function BuildingTableTab({ buildings, category }) {
+  const [sortKey, setSortKey] = useState('yearlyKwh')
+  const sortedBuildings = useMemo(() => sortBuildings(buildings, sortKey), [buildings, sortKey])
+
+  return (
+    <section className="tab-panel table-panel">
+      <div className="table-toolbar">
+        <div>
+          <h2>Building Table</h2>
+          <p>{category?.label || 'Selected category'} records from the non-certified subgroup. Categories come from the attached dataset.</p>
+        </div>
+        <select value={sortKey} onChange={(event) => setSortKey(event.target.value)} aria-label="Sort buildings">
+          {Object.entries(SORT_OPTIONS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </select>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Building name</th>
+              <th>Address</th>
+              <th>Category</th>
+              <th>Square footage</th>
+              <th>Sqft status</th>
+              <th>Daily kWh saved</th>
+              <th>Weekly kWh saved</th>
+              <th>Monthly kWh saved</th>
+              <th>Yearly kWh saved</th>
+              <th>Yearly CO₂ avoided, lbs</th>
+              <th>Yearly cost savings</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Coordinate status</th>
+              <th>Data notes/confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedBuildings.map((building) => {
+              const daily = calculateBuildingSavings(building, 'day')
+              const weekly = calculateBuildingSavings(building, 'week')
+              const monthly = calculateBuildingSavings(building, 'month')
+              const yearly = calculateBuildingSavings(building, 'year')
+              const coordNote = building.lat === null || building.lng === null ? ' Missing coordinates.' : ''
+              return (
+                <tr key={`${building.categoryKey}-${building.id}`}>
+                  <td><b>{building.name}</b></td>
+                  <td>{building.address}</td>
+                  <td>{building.categoryLabel}</td>
+                  <td>{building.sqft ? building.sqft.toLocaleString() : 'No sqft provided'}</td>
+                  <td>{building.sqftStatus}</td>
+                  <td>{formatKWh(daily.kwh)}</td>
+                  <td>{formatKWh(weekly.kwh)}</td>
+                  <td>{formatKWh(monthly.kwh)}</td>
+                  <td>{formatKWh(yearly.kwh)}</td>
+                  <td>{formatCO2(yearly.co2)}</td>
+                  <td>{formatCurrency(yearly.cost)}</td>
+                  <td>{building.lat ?? 'Missing coordinates'}</td>
+                  <td>{building.lng ?? 'Missing coordinates'}</td>
+                  <td>{building.coordinateStatus}</td>
+                  <td>{building.notes}{coordNote}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function CoolCorridorsDashboard() {
+  const [buildings, setBuildings] = useState([])
+  const [categories, setCategories] = useState([])
+  const [metadata, setMetadata] = useState(null)
+  const [activeTab, setActiveTab] = useState('savings')
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
   useEffect(() => {
-    fetch('/data/buildings.geojson')
+    fetch('/data/cool_corridors_buildings.json')
       .then((response) => response.json())
-      .then((data) => {
-        setBuildings(data)
-        setSelected(data.features[0].properties)
+      .then((payload) => {
+        const normalized = (payload.buildings || []).map(normalizeBuilding)
+        setBuildings(normalized)
+        setCategories(payload.categories || [])
+        setMetadata(payload.metadata)
       })
   }, [])
 
-  const runWeatherSimulation = async () => {
-    if (!selected) return
-    setRunning(true)
-    const weather = await getHourlyForecast()
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    setForecast(weather)
-    setResult(runSimulation(selected, weather.periods))
-    setRunning(false)
-  }
+  const selectedCategoryInfo = useMemo(
+    () => categories.find((category) => category.key === selectedCategory) || categories[0],
+    [categories, selectedCategory],
+  )
 
-  useEffect(() => {
-    setResult(null)
-    setForecast(null)
-  }, [selected?.id])
+  const selectedBuildings = useMemo(() => {
+    if (selectedCategory === 'all') return buildings
+    return buildings.filter((building) => building.categoryKey === selectedCategory)
+  }, [buildings, selectedCategory])
 
-  const chartData = useMemo(() => {
-    if (!result || !forecast) return null
-    return {
-      labels: forecast.periods.map(({ time }) => time.toLocaleTimeString([], { hour: 'numeric' })),
-      datasets: [
-        {
-          label: 'Baseline HVAC',
-          data: result.baseline,
-          borderColor: '#ef735a',
-          backgroundColor: 'rgba(239, 115, 90, .09)',
-          borderWidth: 2.5,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          tension: 0.38,
-          fill: true,
-        },
-        {
-          label: 'Cool Corridors optimized',
-          data: result.optimized,
-          borderColor: '#b8df76',
-          backgroundColor: 'rgba(184, 223, 118, .11)',
-          borderWidth: 3,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          tension: 0.38,
-          fill: true,
-        },
-      ],
-    }
-  }, [result, forecast])
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { intersect: false, mode: 'index' },
-    plugins: {
-      legend: { position: 'top', align: 'end', labels: { color: '#9eaca4', usePointStyle: true, boxWidth: 8, padding: 18, font: { family: 'Inter', size: 11 } } },
-      tooltip: { backgroundColor: '#122119', padding: 12, titleColor: '#fff', bodyColor: '#c8d2cc', borderColor: '#2b3d32', borderWidth: 1 },
-    },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: '#718078', maxRotation: 0 } },
-      y: { grid: { color: 'rgba(255,255,255,.055)' }, ticks: { color: '#718078' }, title: { display: true, text: 'kWh', color: '#718078' }, beginAtZero: true },
-    },
-  }
-
-  const maxTemp = forecast ? Math.max(...forecast.periods.map((period) => period.temperature)) : 92
-  const displayReadiness = result?.readiness ?? selected?.baseReadiness ?? 0
+  const tabs = [
+    ['savings', 'Savings'],
+    ['map', 'Clickable Map'],
+  ]
 
   return (
-    <div className="app-shell">
-      <header>
-        <a className="brand" href="#top" aria-label="Cool Corridors home">
-          <span className="brand-mark"><i></i><i></i><i></i></span>
-          <span>COOL <b>CORRIDORS</b></span>
-        </a>
-        <div className="header-center"><span className="live-dot"></span> ATLANTA HEAT RESILIENCE NETWORK</div>
-        <div className="network-status"><span>{buildings?.features.length || '—'}</span><small>CONNECTED BUILDINGS</small></div>
+    <div className="dashboard-shell">
+      <header className="dashboard-header">
+        <div>
+          <span className="header-kicker">Portfolio-scale dashboard</span>
+          <h1>Cool Corridors</h1>
+          <p>Cool Corridors turns Atlanta's uncertified building stock into a retrofit priority map, showing where predictive HVAC scheduling could save the most energy, carbon, and money first.</p>
+        </div>
+        <div className="header-badge">
+          <strong>{selectedBuildings.length ? selectedBuildings.length.toLocaleString() : '...'}</strong>
+          <span>{selectedCategoryInfo?.label || 'selected'} buildings</span>
+        </div>
       </header>
 
-      <main id="top">
-        <section className="intro">
-          <div>
-            <span className="eyebrow">ATLANTA, GEORGIA <i></i> LIVE DEMONSTRATION</span>
-            <h1>Smarter cooling.<br /><em>Stronger communities.</em></h1>
-          </div>
-          <p>Turn public buildings into climate-ready cooling refuges using weather-aware, grid-smart HVAC pre-cooling.</p>
-        </section>
+      {categories.length > 0 && (
+        <CategorySelector
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onChange={setSelectedCategory}
+        />
+      )}
 
-        <section className="workspace">
-          <div className="map-panel">
-            <div className="panel-heading map-heading">
-              <div><span className="section-num">01</span><div><h2>Atlanta Cooling Network</h2><p>Select a public building to model</p></div></div>
-              <div className="map-legend"><span><i className="tier-one"></i>Priority 1</span><span><i className="tier-two"></i>Priority 2</span><span><i className="tier-three"></i>Priority 3</span></div>
-            </div>
-            <div className="map-wrap">
-              <MapContainer center={ATLANTA_CENTER} zoom={12} zoomControl={false} scrollWheelZoom={true}>
-                <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <ZoomControl position="bottomright" />
-                {buildings?.features.map((feature) => {
-                  const building = feature.properties
-                  const [longitude, latitude] = feature.geometry.coordinates
-                  const isSelected = building.id === selected?.id
-                  return (
-                    <Marker
-                      key={building.id}
-                      position={[latitude, longitude]}
-                      icon={L.divIcon({
-                        className: `building-pin tier-${building.priorityTier}${isSelected ? ' selected-pin' : ''}`,
-                        html: `<span style="background:${priorityColors[building.priorityTier] || '#b8df76'}"></span>`,
-                        iconSize: isSelected ? [26, 26] : building.priorityTier === 1 ? [20, 20] : [17, 17],
-                        iconAnchor: isSelected ? [13, 13] : building.priorityTier === 1 ? [10, 10] : [8.5, 8.5],
-                      })}
-                      eventHandlers={{ click: () => setSelected(building) }}
-                    >
-                      <LeafletTooltip direction="top" offset={[0, -8]}>
-                        <strong>{building.name}</strong><span>{building.type}</span>
-                      </LeafletTooltip>
-                    </Marker>
-                  )
-                })}
-              </MapContainer>
-              <div className="map-badge"><Icon name="building" /><span><b>{buildings?.features.length || 0} BUILDINGS</b><small>CONNECTED</small></span></div>
-            </div>
-          </div>
+      <div className="view-switcher">
+        <nav className="tabs" aria-label="Dashboard tabs">
+          {tabs.map(([key, label]) => (
+            <button key={key} className={activeTab === key ? 'active' : ''} onClick={() => setActiveTab(key)}>
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-          <aside className="details-panel">
-            <div className="panel-heading"><div><span className="section-num">02</span><div><h2>Building Intelligence</h2><p>Asset profile & controls</p></div></div></div>
-            {selected ? (
-              <div className="details-content">
-                <div className="building-title">
-                  <span className="building-icon"><Icon name="building" /></span>
-                  <div><span>{selected.type}</span><h3>{selected.name}</h3><p><Icon name="pin" /> {selected.address}</p></div>
-                </div>
-                <div className="spec-grid">
-                  <div><CategoryLabel help={`${selected.sqftStatus}. ${selected.sqftDisplay || 'Gross building floor area used to scale the HVAC load model.'}`} sourceName={selected.sqftSourceName} sourceUrl={selected.sqftSourceUrl}>FLOOR AREA</CategoryLabel><b>{selected.sqft.toLocaleString()} <small>ft²</small></b></div>
-                  <div><CategoryLabel help={`${selected.capacityStatus}. Estimated number of people the building can accommodate as a cooling refuge.`} sourceName={selected.capacitySourceName} sourceUrl={selected.capacitySourceUrl}>REFUGE CAPACITY</CategoryLabel><b>{selected.capacity.toLocaleString()} <small>people</small></b></div>
-                  <div><CategoryLabel help="Type of mechanical cooling system recorded or estimated for this facility.">HVAC SYSTEM</CategoryLabel><b className="zone">{selected.hvacType}</b></div>
-                  <div><CategoryLabel help={`${selected.hvacEfficiencyStatus}. Efficiency is expressed using the source system's rating, such as SEER or a descriptive plant rating.`}>EFFICIENCY</CategoryLabel><b className="zone">{selected.hvacEfficiency}</b></div>
-                  <div><CategoryLabel help={`${selected.coolingTonsStatus}. One cooling ton represents roughly 12,000 BTU of heat removal per hour.`} sourceName={selected.coolingTonsSourceName} sourceUrl={selected.coolingTonsSourceUrl}>COOLING CAPACITY</CategoryLabel><b>{selected.coolingTons.toLocaleString()} <small>tons</small></b></div>
-                  <div><CategoryLabel help={`${selected.thermalLagMinutesStatus}. Estimated time the building's thermal mass continues providing cooling after HVAC output changes.`} sourceName={selected.thermalLagMinutesSourceName} sourceUrl={selected.thermalLagMinutesSourceUrl}>THERMAL LAG</CategoryLabel><b>{selected.thermalLagMinutes} <small>min</small></b></div>
-                  <div><CategoryLabel help={`${selected.operatingHoursStatus}. Normal daily hours used to understand when the facility can serve occupants.`} sourceName={selected.operatingHoursSourceName} sourceUrl={selected.operatingHoursSourceUrl}>OPERATING HOURS</CategoryLabel><b className="zone">{selected.operatingHours}</b></div>
-                  <div><CategoryLabel help={`${selected.heatVulnerabilityScoreStatus}. A 0–100 model score combining neighborhood heat exposure and community vulnerability; higher means greater need.`}>HEAT VULNERABILITY</CategoryLabel><b>{selected.heatVulnerabilityScore} <small>/ 100</small></b></div>
-                </div>
-                <div className="asset-meta"><span>Built {selected.year}</span><i></i><span>{selected.zone}</span><i></i><span>Priority tier {selected.priorityTier}</span></div>
-                <div className="readiness-block">
-                  <div><CategoryLabel help={`${selected.baseReadinessStatus}. The starting score represents facility readiness; after simulation it also includes modeled peak-load reduction and pre-cooling benefit.`}>COOLING REFUGE READINESS</CategoryLabel><b>{displayReadiness}%</b></div>
-                  <div className="progress"><i style={{ width: `${displayReadiness}%` }} /></div>
-                  <p><Icon name="check" /> HVAC and backup power systems online</p>
-                </div>
-                <div className="weather-card">
-                  <div><span className="weather-icon"><Icon name="cloud" /></span><span><small className="category-label">FORECAST PEAK<InfoTip label="Forecast peak">Highest temperature in the 12 hourly forecast periods used by the simulation.</InfoTip></small><b>{maxTemp}°F</b></span></div>
-                  <span><small className="category-label">DATA SOURCE<InfoTip label="Weather data source">Live hourly forecast from the U.S. National Weather Service. The app uses its local Atlanta demo forecast if the API is unavailable.</InfoTip></small><b>{forecast?.source || 'NWS / Atlanta'}</b></span>
-                </div>
-                <button className="simulate-button" onClick={runWeatherSimulation} disabled={running}>
-                  <span>{running ? 'ANALYZING WEATHER...' : 'RUN WEATHER SIMULATION'}</span>
-                  {running ? <i className="spinner" /> : <Icon name="arrow" />}
-                </button>
-                <p className="button-note">12-hour forecast <i></i> Thermal load model <i></i> Grid-aware dispatch</p>
-              </div>
-            ) : <div className="loading">Loading building network...</div>}
-          </aside>
-        </section>
+      {!buildings.length ? (
+        <main className="loading-panel">Loading Cool Corridors portfolio data...</main>
+      ) : (
+        <main>
+          {activeTab === 'savings' && <SavingsTab buildings={selectedBuildings} category={selectedCategoryInfo} />}
+          {activeTab === 'map' && <MapTab buildings={selectedBuildings} category={selectedCategoryInfo} />}
+          {activeTab === 'table' && <BuildingTableTab buildings={selectedBuildings} category={selectedCategoryInfo} />}
+        </main>
+      )}
 
-        <section className={`results ${result ? 'has-results' : ''}`}>
-          <div className="results-heading">
-            <div><span className="section-num">03</span><div><h2>Simulation Impact</h2><p>{result ? `Optimized strategy for ${selected.name}` : 'Run a simulation to calculate the impact'}</p></div></div>
-            {result && <span className="complete"><Icon name="check" /> ANALYSIS COMPLETE</span>}
-          </div>
+      <div className="bottom-data-action">
+        <button className={`table-action ${activeTab === 'table' ? 'active' : ''}`} onClick={() => setActiveTab('table')}>
+          Building Table Data
+        </button>
+      </div>
 
-          {!result ? (
-            <div className="empty-results"><span><Icon name="chart" /></span><p>Select a building and run the weather simulation to reveal a 12-hour energy strategy.</p></div>
-          ) : (
-            <div className="results-body">
-              <div className="metrics-grid">
-                <MetricCard icon="bolt" value={`${result.saved.toFixed(0)} kWh`} label="ENERGY SAVED" detail={`${((result.saved / result.baselineTotal) * 100).toFixed(0)}% reduction`} accent="lime" help="Baseline 12-hour HVAC energy minus optimized pre-cooling energy." />
-                <MetricCard icon="chart" value={`$${result.costSaved.toFixed(0)}`} label="COST SAVED" detail={`$${selected.electricityPriceKwh.toFixed(2)}/kWh`} accent="gold" help={`Energy saved multiplied by this building's dataset electricity rate of $${selected.electricityPriceKwh.toFixed(2)} per kWh.`} />
-                <MetricCard icon="leaf" value={`${result.co2Avoided.toFixed(0)} lbs`} label="CO₂ AVOIDED" detail="Grid emissions" accent="green" help="Energy saved multiplied by the demo grid-emissions factor of 0.82 pounds of CO₂ per kWh." />
-                <MetricCard icon="users" value={`${result.readiness}%`} label="REFUGE READY" detail={`${selected.capacity.toLocaleString()} people`} accent="blue" help="Dataset base-readiness score plus modeled pre-cooling and peak-reduction benefit, capped at 99%." />
-              </div>
-              <div className="chart-card">
-                <div className="chart-title"><div><span className="category-label">HVAC ENERGY PROFILE<InfoTip label="HVAC energy profile">Baseline load is estimated from floor area, forecast temperature, time of day, and cooling capacity. Optimized load increases early cooling, then reduces HVAC use through the hottest hours.</InfoTip></span><h3>Pre-cool early. Coast through the peak.</h3></div><div className="peak-pill"><span className="category-label">PEAK REDUCTION<InfoTip label="Peak reduction">Difference between the highest baseline hourly energy value and the highest optimized hourly value.</InfoTip></span><b>{result.peakReduction.toFixed(1)} kWh</b></div></div>
-                <div className="chart-container"><Line data={chartData} options={chartOptions} /></div>
-              </div>
-            </div>
-          )}
-        </section>
-      </main>
-
-      <footer><span>COOL CORRIDORS / ATLANTA</span><p>Built for resilient cities and the people who power them.</p><span>PROTOTYPE 2026</span></footer>
+      <footer className="dashboard-footer">
+        <span>{metadata?.subgroup || 'Non-certified Atlanta buildings'}</span>
+        <span>Simulated savings for demo purposes. Actual savings depend on HVAC system type, controls compatibility, building envelope, occupancy, utility tariffs, and weather.</span>
+      </footer>
     </div>
   )
+}
+
+export default function App() {
+  return <CoolCorridorsDashboard />
 }
