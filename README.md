@@ -12,7 +12,7 @@ This is not a hardware-first solution. Most buildings already have the equipment
 
 ## Live Demo
 
-Add the GitHub Pages link here once published:
+GitHub Pages link:
 
 ```text
 https://sophie-csv.github.io/cox/
