@@ -6,7 +6,47 @@
     "source": "Atlanta Commercial Buildings Energy Efficiency Ordinance dataset",
     "generatedDate": "2026-06-16",
     "coordinateMethod": "Address interpolation from known Atlanta street anchor points",
-    "note": "Coordinates are estimated via street-grid interpolation. High-confidence for well-known streets; estimated for obscure addresses."
+    "note": "Coordinates are estimated via street-grid interpolation. High-confidence for well-known streets; estimated for obscure addresses.",
+    "filteredAt": "2026-06-16",
+    "filterDescription": "Removed buildings flagged as LEED certified or ENERGY STAR certified in atlanta_building_certification_screening.xlsx.",
+    "originalFeatureCount": 2379,
+    "removedFeatureCount": 33,
+    "remainingFeatureCount": 2346,
+    "removedNames": [
+      "100 PEACHTREE",
+      "1180 PEACHTREE",
+      "171 17TH STREET",
+      "191 PEACHTREE TOWER",
+      "1941 - WHITEHEAD BIOMEDICAL RESEARCH",
+      "2045 - PSYCHOLOGY & INTERDISCIPLINARY SCIENCES",
+      "271 17TH STREET",
+      "3232 - HEALTH SCIENCES RESEARCH BUILDING",
+      "400 COLONY SQUARE",
+      "55 ALLEN PLAZA (EY BUILDING)",
+      "AMERICAN CANCER SOCIETY CENTER",
+      "AMLI LENOX",
+      "ANTHEM TECHNOLOGY CENTER",
+      "BANK OF AMERICA PLAZA",
+      "BUCKHEAD TOWER AT LENOX SQUARE",
+      "CODA-756 WEST PEACHTREE ST.",
+      "DATABANK ATL1 (CODA)",
+      "EDGE ON THE BELTLINE",
+      "GEORGIA-PACIFIC CENTER",
+      "GRANT PARK PARKING GARAGE",
+      "INTERFACE HEADQUARTERS",
+      "ONE ATLANTIC CENTER",
+      "PERKINS AND WILL ATLANTA OFFICE",
+      "PHIPPS TOWER",
+      "POLICE ZONE 3 - CHEROKEE AVE",
+      "PROMENADE",
+      "PROMENADE CENTRAL",
+      "SALESFORCE TOWER",
+      "T3 WEST MIDTOWN",
+      "TERMINUS 100",
+      "TERMINUS 200",
+      "THREE ALLIANCE CENTER",
+      "TWO ALLIANCE CENTER"
+    ]
   },
   "features": [
     {
@@ -25,25 +65,6 @@
         "coordinates": [
           -84.3926,
           33.7562
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "290829",
-        "name": "GRANT PARK PARKING GARAGE",
-        "address": "800 CHEROKEE AVE SE",
-        "type": "Municipal",
-        "sqft": 416000,
-        "ownership": "City of Atlanta owned",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3706,
-          33.7342
         ]
       }
     },
@@ -1950,25 +1971,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "628373",
-        "name": "POLICE ZONE 3 - CHEROKEE AVE",
-        "address": "880 CHEROKEE AVENUE",
-        "type": "Municipal",
-        "sqft": 3292,
-        "ownership": "City of Atlanta owned",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3706,
-          33.7342
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "622855",
         "name": "FIRE STATION 30",
         "address": "10 CLEVELAND AVENUE SW",
@@ -2235,25 +2237,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "702733",
-        "name": "GEORGIA-PACIFIC CENTER",
-        "address": "133 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 2259029,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.389178,
-          33.750997
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "229161",
         "name": "SOUTHERN BELL TOWER",
         "address": "675 W PEACHTREE ST NW",
@@ -2368,44 +2351,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "235027",
-        "name": "BANK OF AMERICA PLAZA",
-        "address": "600 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 1490112,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.38562,
-          33.77568
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "199316",
-        "name": "191 PEACHTREE TOWER",
-        "address": "191 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 1416004,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.388613,
-          33.754332
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "507239",
         "name": "POST RIVERSIDE",
         "address": "4403 NORTHSIDE PKY NW",
@@ -2457,44 +2402,6 @@
         "coordinates": [
           -84.387521,
           33.760773
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "190353",
-        "name": "AMERICAN CANCER SOCIETY CENTER",
-        "address": "250 WILLIAMS ST NW",
-        "type": "Commercial",
-        "sqft": 1175228,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.2605,
-          33.839
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "944393_A",
-        "name": "ONE ATLANTIC CENTER",
-        "address": "1201 W PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 1172547,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.38772,
-          33.79603
         ]
       }
     },
@@ -2672,25 +2579,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "363281",
-        "name": "PROMENADE",
-        "address": "1230 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 899558,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.380042,
-          33.7969
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "574205",
         "name": "GEORGIA POWER BLDG",
         "address": "241 RALPH MCGILL BLVD NE",
@@ -2799,25 +2687,6 @@
         "coordinates": [
           -84.383855,
           33.79225
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "381766",
-        "name": "1180 PEACHTREE",
-        "address": "1180 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 780036,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.381272,
-          33.7954
         ]
       }
     },
@@ -2989,25 +2858,6 @@
         "coordinates": [
           -84.3876,
           33.7608
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "239952",
-        "name": "SALESFORCE TOWER",
-        "address": "950 E PACES FERRY RD NE",
-        "type": "Commercial",
-        "sqft": 690100,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.355633,
-          33.8409
         ]
       }
     },
@@ -3280,25 +3130,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "241776",
-        "name": "CODA-756 WEST PEACHTREE ST.",
-        "address": "756 WEST PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 650735,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.387825,
-          33.784178
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "158469",
         "name": "HANOVER BUCKHEAD VILLAGE ---(MP)",
         "address": "3116 ROSWELL RD NW",
@@ -3318,44 +3149,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "351688",
-        "name": "TERMINUS 100",
-        "address": "3280 PEACHTREE RD NE",
-        "type": "Commercial",
-        "sqft": 648864,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.357784,
-          33.86496
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "801000",
-        "name": "ANTHEM TECHNOLOGY CENTER",
-        "address": "740 WEST PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 640339,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.387834,
-          33.783589
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "507119",
         "name": "THE MARK @ ATLANTA",
         "address": "955 SPRING ST NW",
@@ -3369,25 +3162,6 @@
         "coordinates": [
           -84.3937,
           33.784
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "847748",
-        "name": "171 17TH STREET",
-        "address": "171 17TH ST NW",
-        "type": "Commercial",
-        "sqft": 636546,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3055,
-          33.698
         ]
       }
     },
@@ -3679,25 +3453,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "683525",
-        "name": "TERMINUS 200",
-        "address": "3333 PIEDMONT RD NE",
-        "type": "Commercial",
-        "sqft": 578927,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.348,
-          33.8545
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "655784",
         "name": "ST. REGIS",
         "address": "88 W PACES FERRY RD NW",
@@ -3806,25 +3561,6 @@
         "coordinates": [
           -84.356747,
           33.869568
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "184534",
-        "name": "271 17TH STREET",
-        "address": "271 17TH ST NW",
-        "type": "Commercial",
-        "sqft": 571720,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.4795,
-          33.7145
         ]
       }
     },
@@ -4015,25 +3751,6 @@
         "coordinates": [
           -84.4555,
           33.782
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "716404",
-        "name": "THREE ALLIANCE CENTER",
-        "address": "3550 LENOX ROAD",
-        "type": "Commercial",
-        "sqft": 544000,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.4435,
-          33.6395
         ]
       }
     },
@@ -4344,25 +4061,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "910771",
-        "name": "PHIPPS TOWER",
-        "address": "3438 PEACHTREE RD NE",
-        "type": "Commercial",
-        "sqft": 511821,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.356646,
-          33.870016
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "614886",
         "name": "HOLIDAY INN SELECT CAPITOL PLAZA",
         "address": "450 CAPITOL AVE",
@@ -4433,25 +4131,6 @@
         "coordinates": [
           -84.5245,
           33.821
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "255978",
-        "name": "TWO ALLIANCE CENTER",
-        "address": "3560 LENOX RD NE",
-        "type": "Commercial",
-        "sqft": 505877,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3382,
-          33.84812
         ]
       }
     },
@@ -4699,25 +4378,6 @@
         "coordinates": [
           -84.3823,
           33.7865
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "405280",
-        "name": "400 COLONY SQUARE",
-        "address": "1201 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 477964,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.380755,
-          33.79603
         ]
       }
     },
@@ -6149,25 +5809,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "116446",
-        "name": "BUCKHEAD TOWER AT LENOX SQUARE",
-        "address": "3399 PEACHTREE RD NE",
-        "type": "Commercial",
-        "sqft": 374263,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.356927,
-          33.868768
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "776580",
         "name": "CENTRAL CITY CONDOMINIUM",
         "address": "384 RALPH MCGILL BLVD",
@@ -6225,25 +5866,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "738245",
-        "name": "PROMENADE CENTRAL",
-        "address": "1200 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 370000,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.38078,
-          33.796
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "587273",
         "name": "",
         "address": "850 WILLIAMS ST",
@@ -6257,25 +5879,6 @@
         "coordinates": [
           -84.2515,
           33.86
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "986307",
-        "name": "55 ALLEN PLAZA (EY BUILDING)",
-        "address": "55 IVAN ALLEN JR. BLVD.",
-        "type": "Commercial",
-        "sqft": 368171,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.5275,
-          33.695
         ]
       }
     },
@@ -9512,25 +9115,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "242663",
-        "name": "T3 WEST MIDTOWN",
-        "address": "383 17TH ST NW",
-        "type": "Commercial",
-        "sqft": 254830,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.5065,
-          33.605
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "914478",
         "name": "CARRINGTON PARK AT LENOX CONDOS",
         "address": "2700 PINE TREE RD NE",
@@ -11045,25 +10629,6 @@
         "coordinates": [
           -84.4975,
           33.7745
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "236043",
-        "name": "EDGE ON THE BELTLINE",
-        "address": "670 DEKALB AVE NE",
-        "type": "Multifamily",
-        "sqft": 209228,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.2935,
-          33.752
         ]
       }
     },
@@ -14598,25 +14163,6 @@
         "coordinates": [
           -84.34435,
           33.84771
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "789103",
-        "name": "100 PEACHTREE",
-        "address": "100 PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 141246,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3895,
-          33.7491
         ]
       }
     },
@@ -19753,25 +19299,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "802005",
-        "name": "DATABANK ATL1 (CODA)",
-        "address": "760 WEST PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 86681,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.387823,
-          33.784326
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "709127_A",
         "name": "",
         "address": "400 CENTRAL PARK NE",
@@ -22445,25 +21972,6 @@
         "coordinates": [
           -84.361,
           33.811
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "567513",
-        "name": "PERKINS AND WILL ATLANTA OFFICE",
-        "address": "1315 PEACHTREE ST NE",
-        "type": "Commercial",
-        "sqft": 68750,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.377951,
-          33.79945
         ]
       }
     },
@@ -29076,25 +28584,6 @@
         "coordinates": [
           -84.331,
           33.7085
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "636517",
-        "name": "INTERFACE HEADQUARTERS",
-        "address": "1280 W PEACHTREE ST NW",
-        "type": "Commercial",
-        "sqft": 45000,
-        "ownership": "General commercial / private",
-        "coordSource": "interpolated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.387688,
-          33.7984
         ]
       }
     },
@@ -42876,25 +42365,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "620390",
-        "name": "AMLI LENOX",
-        "address": "3478 LAKESIDE DR NE",
-        "type": "Multifamily",
-        "sqft": 0,
-        "ownership": "General commercial / private",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.4645,
-          33.8465
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "949713_A",
         "name": "EMORY POINT 1",
         "address": "855 EMORY POINT DR",
@@ -43237,25 +42707,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "556325",
-        "name": "1941 - WHITEHEAD BIOMEDICAL RESEARCH",
-        "address": "615 MICHAEL STREET",
-        "type": "Institutional",
-        "sqft": 324964,
-        "ownership": "Publicly owned / public-serving",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.3205,
-          33.641
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "583438",
         "name": "THE SUITES",
         "address": "350 SPELMAN LN",
@@ -43459,25 +42910,6 @@
         "coordinates": [
           -84.4945,
           33.674
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "793144",
-        "name": "3232 - HEALTH SCIENCES RESEARCH BUILDING",
-        "address": "1760 HAYGOOD DRIVE",
-        "type": "Institutional",
-        "sqft": 214033,
-        "ownership": "Publicly owned / public-serving",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.397,
-          33.827
         ]
       }
     },
@@ -43896,25 +43328,6 @@
         "coordinates": [
           -84.31048,
           33.79768
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "185081",
-        "name": "2045 - PSYCHOLOGY & INTERDISCIPLINARY SCIENCES",
-        "address": "36 EAGLE ROW",
-        "type": "Institutional",
-        "sqft": 121762,
-        "ownership": "Publicly owned / public-serving",
-        "coordSource": "estimated"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.5185,
-          33.6515
         ]
       }
     },
