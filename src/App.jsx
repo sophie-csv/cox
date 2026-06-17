@@ -370,16 +370,72 @@ function SummaryCards({ totals, activeTemp, selectedScale }) {
 }
 
 function AssumptionsPanel() {
+  const assumptions = [
+    {
+      label: 'Baseline indoor setpoint',
+      value: `${BASELINE_SETPOINT_F}°F`,
+      help: 'The normal cooling target used as the comparison case before pre-cooling is applied.',
+      sourceLabel: 'ASHRAE Standard 55 thermal comfort guidance',
+      sourceUrl: 'https://www.ashrae.org/technical-resources/bookstore/standard-55-thermal-environmental-conditions-for-human-occupancy',
+    },
+    {
+      label: 'Pre-cool indoor setpoint',
+      value: `${PRECOOL_SETPOINT_F}°F`,
+      help: 'The earlier-day cooling target used to store cooling in the building before hotter or more expensive hours.',
+      sourceLabel: 'ACM pre-cooling peak-demand reduction paper',
+      sourceUrl: 'https://dl.acm.org/doi/10.1145/2821650.2821656',
+    },
+    {
+      label: 'Cooling load factor',
+      value: COOLING_LOAD_FACTOR,
+      help: 'A calibration input that converts square footage and outdoor-temperature difference into a simplified cooling-load estimate.',
+      sourceLabel: 'DOE EnergyPlus building energy modeling basis',
+      sourceUrl: 'https://energyplus.net/',
+    },
+    {
+      label: 'Pre-cooling savings factor',
+      value: SAVINGS_EFFICIENCY_FACTOR,
+      help: 'The estimated share of cooling load shifted or avoided by predictive HVAC scheduling.',
+      sourceLabel: 'Model-predictive HVAC control literature',
+      sourceUrl: 'https://dl.acm.org/doi/10.1145/2821650.2821656',
+    },
+    {
+      label: 'Electricity rate',
+      value: `$${ELECTRICITY_RATE_PER_KWH}/kWh`,
+      help: 'A blended electricity price used to convert estimated kWh savings into dollars.',
+      sourceLabel: 'U.S. EIA electricity data browser',
+      sourceUrl: 'https://www.eia.gov/electricity/data/browser/',
+    },
+    {
+      label: 'Grid emissions factor',
+      value: `${EMISSIONS_FACTOR_LBS_PER_KWH} lbs CO₂/kWh`,
+      help: 'A grid-emissions factor used to convert estimated kWh savings into avoided pounds of CO₂.',
+      sourceLabel: 'U.S. EPA eGRID emissions data',
+      sourceUrl: 'https://www.epa.gov/egrid',
+    },
+  ]
+
   return (
     <aside className="assumptions-panel">
       <h3>Calculation Assumptions</h3>
       <ul>
-        <li>Baseline indoor setpoint: <b>{BASELINE_SETPOINT_F}°F</b></li>
-        <li>Pre-cool indoor setpoint: <b>{PRECOOL_SETPOINT_F}°F</b></li>
-        <li>Cooling load factor: <b>{COOLING_LOAD_FACTOR}</b></li>
-        <li>Pre-cooling savings factor: <b>{SAVINGS_EFFICIENCY_FACTOR}</b></li>
-        <li>Electricity rate: <b>${ELECTRICITY_RATE_PER_KWH}/kWh</b></li>
-        <li>Grid emissions factor: <b>{EMISSIONS_FACTOR_LBS_PER_KWH} lbs CO₂/kWh</b></li>
+        {assumptions.map((assumption) => (
+          <li key={assumption.label}>
+            <div className="assumption-title">
+              <span>{assumption.label}</span>
+              <span className="assumption-help" tabIndex="0" aria-label={`${assumption.label} source and meaning`}>
+                ?
+                <span className="assumption-tooltip">
+                  {assumption.help}
+                  <a href={assumption.sourceUrl} target="_blank" rel="noreferrer">
+                    Source: {assumption.sourceLabel}
+                  </a>
+                </span>
+              </span>
+            </div>
+            <b>{assumption.value}</b>
+          </li>
+        ))}
       </ul>
     </aside>
   )
@@ -687,7 +743,8 @@ function CoolCorridorsDashboard() {
         <header className="dashboard-header">
           <div>
             <span className="header-kicker">Predictive HVAC savings demo</span>
-            <h1>Cool Cast</h1>
+            <h1>CoolCast ATL</h1>
+            <p className="creator-line">Created by: Sophie Castellon, Saanjali Ganesh, John Odom, Dominic Slovisky</p>
             <p>Atlanta building pre-cooling dashboard with fixed-temperature scenarios, live weather mode, and clickable building-level savings estimates.</p>
           </div>
           <div className="header-badge">
@@ -752,8 +809,11 @@ function CoolCorridorsDashboard() {
         )}
 
         <div className="bottom-data-action">
-          <button className={`table-action ${activeTab === 'table' ? 'active' : ''}`} onClick={() => setActiveTab('table')}>
-            Building Table Data
+          <button
+            className={`table-action ${activeTab === 'table' ? 'active' : ''}`}
+            onClick={() => setActiveTab((currentTab) => (currentTab === 'table' ? 'map' : 'table'))}
+          >
+            {activeTab === 'table' ? 'Hide Building Table Data' : 'Building Table Data'}
           </button>
         </div>
 
